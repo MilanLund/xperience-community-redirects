@@ -2,6 +2,7 @@
 using CMS.Base;
 using CMS.ContentEngine;
 using CMS.ContentEngine.Internal;
+using CMS.Core;
 using CMS.DataEngine;
 using CMS.Helpers;
 using CMS.Membership;
@@ -42,7 +43,8 @@ public class RedirectListing : ListingPage
 
         PageConfiguration.ColumnConfigurations
             .AddColumn(nameof(RedirectInfo.RedirectSourceUrl), "Source URL", searchable: true)
-            .AddColumn(nameof(RedirectInfo.RedirectTargetWebPageItemGUID), "Target web page", formatter: GetWebPageUrl);
+            .AddColumn(nameof(RedirectInfo.RedirectTargetWebPageItemGUID), "Target web page", formatter: GetWebPageUrl)
+            .AddColumn(nameof(RedirectInfo.RedirectQueryString), "Target web page query string", visible: false);
 
         PageConfiguration.AddEditRowAction<RedirectEditSection>();
         
@@ -76,7 +78,19 @@ public class RedirectListing : ListingPage
 
                 if (pageUrl != null)
                 {
-                    return pageUrl.Replace("~", "");
+                    pageUrl = pageUrl.Replace("~", "");
+
+                    if (dataContainer.TryGetValue(nameof(RedirectInfo.RedirectQueryString), out object? queryStringObject))
+                    {
+                        string queryString = ValidationHelper.GetString(queryStringObject, "");
+
+                        if (!string.IsNullOrEmpty(queryString))
+                        {
+                            return $"{pageUrl}?{queryString.TrimStart('?')}";
+                        }
+
+                        return pageUrl;
+                    }
                 }
             }
         }

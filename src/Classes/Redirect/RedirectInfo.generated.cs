@@ -77,6 +77,17 @@ namespace XperienceCommunity.Redirects
 
 
         /// <summary>
+        /// Redirect target web page query string.
+        /// </summary>
+        [DatabaseField]
+        public virtual string RedirectQueryString
+        {
+            get => GetStringValue(nameof(RedirectQueryString), String.Empty);
+            set => SetValue(nameof(RedirectQueryString), value);
+        }
+
+
+        /// <summary>
         /// Deletes the object using appropriate provider.
         /// </summary>
         protected override void DeleteObject()

@@ -12,7 +12,7 @@ namespace XperienceCommunity.Redirects.UIPages;
 internal class RedirectEditModel
 {
     [RequiredValidationRule]
-    [TextInputComponent(Label = "Source URL", Order = 2)]
+    [TextInputComponent(Label = "Source URL", Order = 1)]
     public string? SourceUrl { get; set; }
 
     [RequiredValidationRule]
@@ -21,13 +21,17 @@ internal class RedirectEditModel
                 ItemModifierType = typeof(WebPagesWithUrlWebPagePanelItemModifier),
                 ExplanationTextAsHtml = true,
                 ExplanationText = "Select the target web page to which requests for the source URL will be redirected to.",
-                Order = 3,
+                Order = 2,
                 MaximumPages = 1)]
-    public IEnumerable<WebPageRelatedItem> TargetWebPageItem { get; set; } = [];
+    public IEnumerable<WebPageRelatedItem> TargetWebPageItem { get; set; } = Enumerable.Empty<WebPageRelatedItem>();
+
+    [TextInputComponent(Label = "Target web page query string", Order = 3)]
+    public string? TargetWebPageQueryString { get; set; }
 
     public void MapToRedirectInfo(RedirectInfo info)
     {
         info.RedirectSourceUrl = SourceUrl?.ToLower();
         info.RedirectTargetWebPageItemGUID = TargetWebPageItem.First().WebPageGuid;
+        info.RedirectQueryString = TargetWebPageQueryString;
     }
 }

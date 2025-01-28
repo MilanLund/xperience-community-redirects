@@ -87,6 +87,23 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
         };
         formItem.SetComponentName(WebPageSelectorComponent.IDENTIFIER);
         formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
+            Name = nameof(RedirectInfo.RedirectQueryString),
+            DataType = FieldDataType.LongText,
+            AllowEmpty = true,
+            Visible = true,
+            Enabled = true,
+            Settings = new()
+            {
+                { nameof(TextInputProperties.Label), "Target web page query string" },
+                { nameof(TextInputProperties.ExplanationText), "The query string to be appended to the target web page URL." },
+                { nameof(TextInputProperties.ExplanationTextAsHtml), true },
+            }
+        };
+        formItem.SetComponentName(TextInputComponent.IDENTIFIER);
+        formInfo.AddFormItem(formItem);
         
         formItem = new FormFieldInfo
         {

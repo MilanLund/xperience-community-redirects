@@ -31,6 +31,7 @@ Clicking `New redirect` will enable you to create a new redirect, entering the `
 - Redirects are created on a per web channel basis, ensuring that you must select the relevant web channel when choosing the target page.
 - The functionality will attempt to redirect the user to the correct language variant of the target page by analyzing the source URL for the presence of a culture code (e.g. `en-GB`) or a language name (e.g. `en`) URL prefix.
 - Users will be redirected based on the target page's `canonical URL` setting, whether it is the `system URL` or the `vanity URL` defined for the page.
+- When creating a redirect, you can specify query string parameters to be added to the target URL. These parameters will be appended to the target URL when the redirect occurs.
 - Only relative URLs are supported for `source URLs` at this time. Absolute URLs are not supported.
 - The redirects middleware is placed later in the request pipeline than the Kentico middleware, meaning that Kentico's own URL redirect functionality (e.g. former URLs) takes president.
 - By default, redirects are enabled for use with the Continuous Integration and Continuous Deployment features of Xperience by Kentico. This enables developers to prepare redirects in a local development environment, share them amongst other team members working on the same project, as well as deploy them to environments in their deployment pipeline.

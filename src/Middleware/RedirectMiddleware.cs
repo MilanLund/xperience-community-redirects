@@ -1,7 +1,8 @@
+using System.Net;
+using System.Web;
 using CMS.ContentEngine;
 using CMS.Websites;
 using CMS.Websites.Internal;
-using Kentico.Content.Web.Mvc.Routing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using XperienceCommunity.Redirects.Services;
@@ -14,14 +15,14 @@ public class RedirectMiddleware
     private readonly IRedirectService _redirectService;
     private readonly IWebPageUrlRetriever _webPageUrlRetriever;
     
-    private string[] ExcludedStartingPaths = new []
-    {
+    private static readonly string[] ExcludedStartingPaths =
+    [
         "/cmsctx",
         "/admin",
         "/getmedia",
         "/getcontentasset",
         "/kentico."
-    };
+    ];
 
     public RedirectMiddleware(
         RequestDelegate next,
@@ -53,15 +54,14 @@ public class RedirectMiddleware
             }
         }
         
-        List<RedirectInfo> allRedirects = (await _redirectService.GetRedirects()).ToList();
-
-        if (allRedirects == null || allRedirects.Count == 0)
+        var allRedirects = await _redirectService.GetRedirects();
+        if (allRedirects?.Any() != true)
         {
             await _next(context);
             return;
         }
         
-        RedirectInfo matchingRedirectInfo = allRedirects.FirstOrDefault(r => r.RedirectSourceUrl == requestPath);
+        RedirectInfo? matchingRedirectInfo = allRedirects.FirstOrDefault(r => r.RedirectSourceUrl == requestPath);
 
         if (matchingRedirectInfo != null)
         {
@@ -98,6 +98,16 @@ public class RedirectMiddleware
 
                 if (!requestPath.Equals(targetPageUrl, StringComparison.OrdinalIgnoreCase))
                 {
+                    // Add query string if one is configured
+                    if (!string.IsNullOrEmpty(matchingRedirectInfo?.RedirectQueryString))
+                    {
+                        var sanitizedQueryString = EncodeQueryParameters(matchingRedirectInfo.RedirectQueryString.TrimStart('?'));
+                        if (!string.IsNullOrEmpty(sanitizedQueryString))
+                        {
+                            targetPageUrl = $"{targetPageUrl}?{sanitizedQueryString}";
+                        }
+                    }
+
                     context.Response.Redirect(targetPageUrl, permanent: true);
                 
                     await context.Response.CompleteAsync();
@@ -126,6 +136,60 @@ public class RedirectMiddleware
                 nameof(ContentLanguageInfo.ContentLanguageCultureFormat),
                 nameof(ContentLanguageInfo.ContentLanguageIsDefault))
             .ToList();
+    }
+
+    private string EncodeQueryParameters(string queryString)
+    {
+        if (string.IsNullOrEmpty(queryString))
+        {
+            return queryString;
+        }
+
+        // Validate query string length
+        if (queryString.Length > 2048)
+        {
+            return string.Empty;
+        }
+
+        var parameters = queryString.Split('&', StringSplitOptions.RemoveEmptyEntries);
+        
+        var encodedParameters = parameters.Select(ParseAndEncodeQueryParameter)
+            .Where(param => param != null);
+
+        return string.Join("&", encodedParameters);
+    }
+
+    private string? ParseAndEncodeQueryParameter(string param)
+    {
+        var parts = param.Split('=', 2); // Split on first '=' only
+        var key = parts[0].Trim();
+
+        if (!IsValidQueryStringKey(key))
+        {
+            return null;
+        }
+
+        // If no value part exists, return just the key
+        if (parts.Length == 1)
+        {
+            return key;
+        }
+
+        // Encode the value part
+        var value = parts[1].Trim();
+        var encodedValue = HttpUtility.UrlEncode(
+            WebUtility.HtmlEncode(value)
+        );
+        
+        return $"{key}={encodedValue}";
+    }
+
+    private bool IsValidQueryStringKey(string key)
+    {
+        // Only allow alphanumeric characters, underscore, and hyphen in keys
+        return !string.IsNullOrEmpty(key) 
+               && key.Length <= 64 
+               && System.Text.RegularExpressions.Regex.IsMatch(key, "^[a-zA-Z0-9_-]+$");
     }
 }
 

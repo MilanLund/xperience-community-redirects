@@ -52,7 +52,8 @@ internal class RedirectEdit : ModelEditPage<RedirectEditModel>
             _model = new RedirectEditModel()
             {
                 TargetWebPageItem = targetWebPageItems,
-                SourceUrl = info.RedirectSourceUrl
+                SourceUrl = info.RedirectSourceUrl,
+                TargetWebPageQueryString = info.RedirectQueryString
             };
 
             return _model;
