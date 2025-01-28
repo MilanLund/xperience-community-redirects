@@ -104,6 +104,23 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
         };
         formItem.SetComponentName(TextInputComponent.IDENTIFIER);
         formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
+            Name = nameof(RedirectInfo.RedirectAnchor),
+            DataType = FieldDataType.LongText,
+            AllowEmpty = true,
+            Visible = true,
+            Enabled = true,
+            Settings = new()
+            {
+                { nameof(TextInputProperties.Label), "Target web page anchor" },
+                { nameof(TextInputProperties.ExplanationText), "The anchor to be appended to the target web page URL." },
+                { nameof(TextInputProperties.ExplanationTextAsHtml), true },
+            }
+        };
+        formItem.SetComponentName(TextInputComponent.IDENTIFIER);
+        formInfo.AddFormItem(formItem);
         
         formItem = new FormFieldInfo
         {

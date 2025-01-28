@@ -25,13 +25,17 @@ internal class RedirectEditModel
                 MaximumPages = 1)]
     public IEnumerable<WebPageRelatedItem> TargetWebPageItem { get; set; } = Enumerable.Empty<WebPageRelatedItem>();
 
-    [TextInputComponent(Label = "Target web page query string", Order = 3)]
+    [TextInputComponent(Label = "Target web page query string", Order = 3, ExplanationText = "The query string to be appended to the target web page URL. Example: `?param1=value1&param2=value2`")]
     public string? TargetWebPageQueryString { get; set; }
+
+    [TextInputComponent(Label = "Target web page anchor", Order = 4, ExplanationText = "The anchor to be appended to the target web page URL. Example: `#section`")]
+    public string? TargetWebPageAnchor { get; set; }
 
     public void MapToRedirectInfo(RedirectInfo info)
     {
         info.RedirectSourceUrl = SourceUrl?.ToLower();
         info.RedirectTargetWebPageItemGUID = TargetWebPageItem.First().WebPageGuid;
         info.RedirectQueryString = TargetWebPageQueryString;
+        info.RedirectAnchor = TargetWebPageAnchor;
     }
 }

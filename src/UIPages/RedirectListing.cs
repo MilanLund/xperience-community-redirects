@@ -44,7 +44,8 @@ public class RedirectListing : ListingPage
         PageConfiguration.ColumnConfigurations
             .AddColumn(nameof(RedirectInfo.RedirectSourceUrl), "Source URL", searchable: true)
             .AddColumn(nameof(RedirectInfo.RedirectTargetWebPageItemGUID), "Target web page", formatter: GetWebPageUrl)
-            .AddColumn(nameof(RedirectInfo.RedirectQueryString), "Target web page query string", visible: false);
+            .AddColumn(nameof(RedirectInfo.RedirectQueryString), "Target web page query string", visible: false)
+            .AddColumn(nameof(RedirectInfo.RedirectAnchor), "Target web page anchor", visible: false);
 
         PageConfiguration.AddEditRowAction<RedirectEditSection>();
         
@@ -80,17 +81,30 @@ public class RedirectListing : ListingPage
                 {
                     pageUrl = pageUrl.Replace("~", "");
 
+                    string queryString = "";
+                    string anchor = "";
+
                     if (dataContainer.TryGetValue(nameof(RedirectInfo.RedirectQueryString), out object? queryStringObject))
                     {
-                        string queryString = ValidationHelper.GetString(queryStringObject, "");
-
-                        if (!string.IsNullOrEmpty(queryString))
-                        {
-                            return $"{pageUrl}?{queryString.TrimStart('?')}";
-                        }
-
-                        return pageUrl;
+                        queryString = ValidationHelper.GetString(queryStringObject, "");
                     }
+
+                    if (dataContainer.TryGetValue(nameof(RedirectInfo.RedirectAnchor), out object? anchorObject))
+                    {
+                        anchor = ValidationHelper.GetString(anchorObject, "");
+                    }
+
+                    if (!string.IsNullOrEmpty(queryString))
+                    {
+                        pageUrl = $"{pageUrl}?{queryString.TrimStart('?')}";
+                    }
+
+                    if (!string.IsNullOrEmpty(anchor))
+                    {
+                        pageUrl = $"{pageUrl}#{anchor.TrimStart('#')}";
+                    }
+
+                    return pageUrl;
                 }
             }
         }

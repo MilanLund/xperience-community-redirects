@@ -88,6 +88,18 @@ namespace XperienceCommunity.Redirects
 
 
         /// <summary>
+        /// Redirect target web page anchor.
+        /// </summary>
+        [DatabaseField]
+        public virtual string RedirectAnchor
+        {
+            get => GetStringValue(nameof(RedirectAnchor), String.Empty);
+            set => SetValue(nameof(RedirectAnchor), value);
+        }
+
+
+
+        /// <summary>
         /// Deletes the object using appropriate provider.
         /// </summary>
         protected override void DeleteObject()

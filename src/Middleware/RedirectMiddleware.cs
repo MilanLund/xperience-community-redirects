@@ -101,10 +101,19 @@ public class RedirectMiddleware
                     // Add query string if one is configured
                     if (!string.IsNullOrEmpty(matchingRedirectInfo?.RedirectQueryString))
                     {
-                        var sanitizedQueryString = EncodeQueryParameters(matchingRedirectInfo.RedirectQueryString.TrimStart('?'));
+                        var sanitizedQueryString = SanitizeQueryParameters(matchingRedirectInfo.RedirectQueryString.Trim().TrimStart('?'));
                         if (!string.IsNullOrEmpty(sanitizedQueryString))
                         {
                             targetPageUrl = $"{targetPageUrl}?{sanitizedQueryString}";
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(matchingRedirectInfo.RedirectAnchor))
+                    {
+                        var sanitizedAnchor = SanitizeAnchor(matchingRedirectInfo.RedirectAnchor.Trim().TrimStart('#'));
+                        if (!string.IsNullOrEmpty(sanitizedAnchor))
+                        {
+                            targetPageUrl = $"{targetPageUrl}#{sanitizedAnchor}";
                         }
                     }
 
@@ -138,7 +147,7 @@ public class RedirectMiddleware
             .ToList();
     }
 
-    private string EncodeQueryParameters(string queryString)
+    private string SanitizeQueryParameters(string queryString)
     {
         if (string.IsNullOrEmpty(queryString))
         {
@@ -186,10 +195,35 @@ public class RedirectMiddleware
 
     private bool IsValidQueryStringKey(string key)
     {
-        // Only allow alphanumeric characters, underscore, and hyphen in keys
+        // Allow characters that are valid in query parameter keys:
+        // - alphanumeric
+        // - !$'()*+,;:@_.-
+        // Excluding potential dangerous characters like <>"\{}|^`%#& and spaces
         return !string.IsNullOrEmpty(key) 
-               && key.Length <= 64 
-               && System.Text.RegularExpressions.Regex.IsMatch(key, "^[a-zA-Z0-9_-]+$");
+               && key.Length <= 200 
+               && System.Text.RegularExpressions.Regex.IsMatch(key, @"^[a-zA-Z0-9!$'()*+,;:@_.\-]+$");
+    }
+
+    private string SanitizeAnchor(string anchor)
+    {
+        if (string.IsNullOrEmpty(anchor))
+        {
+            return string.Empty;
+        }
+
+        // Validate anchor length (matching query string max length)
+        if (anchor.Length > 2048)
+        {
+            return string.Empty;
+        }
+
+        // Allow characters that are valid in URL fragments:
+        // - alphanumeric
+        // - !$&'()*+,;=-._~:@/?
+        // Excluding potential dangerous characters like <>"{}|\^`%# and spaces
+        return System.Text.RegularExpressions.Regex.IsMatch(anchor, @"^[a-zA-Z0-9!$&'()*+,;=\-._~:@/?]+$") 
+            ? HttpUtility.UrlEncode(anchor) 
+            : string.Empty;
     }
 }
 
