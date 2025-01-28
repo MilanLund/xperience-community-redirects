@@ -45,7 +45,9 @@ public class RedirectListing : ListingPage
             .AddColumn(nameof(RedirectInfo.RedirectSourceUrl), "Source URL", searchable: true)
             .AddColumn(nameof(RedirectInfo.RedirectTargetWebPageItemGUID), "Target web page", formatter: GetWebPageUrl)
             .AddColumn(nameof(RedirectInfo.RedirectQueryString), "Target web page query string", visible: false)
-            .AddColumn(nameof(RedirectInfo.RedirectAnchor), "Target web page anchor", visible: false);
+            .AddColumn(nameof(RedirectInfo.RedirectAnchor), "Target web page anchor", visible: false)
+            .AddColumn(nameof(RedirectInfo.RedirectTargetType), "Target type", visible: false)
+            .AddColumn(nameof(RedirectInfo.RedirectTargetExternalAbsoluteUrl), "Target external URL", visible: false);
 
         PageConfiguration.AddEditRowAction<RedirectEditSection>();
         
@@ -57,6 +59,15 @@ public class RedirectListing : ListingPage
     
     private string GetWebPageUrl(object objectValue, IDataContainer dataContainer)
     {
+        dataContainer.TryGetValue(nameof(RedirectInfo.RedirectTargetType), out object? targetTypeObject);
+        string targetType = ValidationHelper.GetString(targetTypeObject, "");
+
+        if (targetType == "external")
+        {
+            dataContainer.TryGetValue(nameof(RedirectInfo.RedirectTargetExternalAbsoluteUrl), out object? targetExternalUrlObject);
+            return ValidationHelper.GetString(targetExternalUrlObject, "");
+        }
+
         Guid webPageItemGuid = ValidationHelper.GetGuid(objectValue, Guid.Empty);
         
         if (webPageItemGuid != Guid.Empty)

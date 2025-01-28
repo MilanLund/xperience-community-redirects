@@ -15,27 +15,51 @@ internal class RedirectEditModel
     [TextInputComponent(Label = "Source URL", Order = 1)]
     public string? SourceUrl { get; set; }
 
-    [RequiredValidationRule]
+    [DropDownComponent(
+        Label = "Target type",
+        Order = 2,
+        Options = ";Internal web page\nexternal;External URL",
+        ExplanationText = "Select the target type to which requests for the source URL will be redirected to.",
+        ExplanationTextAsHtml = true)]
+    public string? RedirectTargetType { get; set; }
+
+    [VisibleIfEqualTo(nameof(RedirectTargetType), "")]
     [WebPageSelectorComponent(
                 Label = "Target web page",
                 ItemModifierType = typeof(WebPagesWithUrlWebPagePanelItemModifier),
                 ExplanationTextAsHtml = true,
                 ExplanationText = "Select the target web page to which requests for the source URL will be redirected to.",
-                Order = 2,
+                Order = 3,
                 MaximumPages = 1)]
     public IEnumerable<WebPageRelatedItem> TargetWebPageItem { get; set; } = Enumerable.Empty<WebPageRelatedItem>();
 
-    [TextInputComponent(Label = "Target web page query string", Order = 3, ExplanationText = "The query string to be appended to the target web page URL. Example: `?param1=value1&param2=value2`")]
+    [VisibleIfEqualTo(nameof(RedirectTargetType), "")]
+    [TextInputComponent(
+        Label = "Target web page query string",
+        Order = 4,
+        ExplanationText = "The query string to be appended to the target web page URL. Example: `?param1=value1&param2=value2`",
+        ExplanationTextAsHtml = true)]
     public string? TargetWebPageQueryString { get; set; }
 
-    [TextInputComponent(Label = "Target web page anchor", Order = 4, ExplanationText = "The anchor to be appended to the target web page URL. Example: `#section`")]
+    [VisibleIfEqualTo(nameof(RedirectTargetType), "")]
+    [TextInputComponent(
+        Label = "Target web page anchor",
+        Order = 5,
+        ExplanationText = "The anchor to be appended to the target web page URL. Example: `#section`",
+        ExplanationTextAsHtml = true)]
     public string? TargetWebPageAnchor { get; set; }
+
+    [VisibleIfEqualTo(nameof(RedirectTargetType), "external")]
+    [TextInputComponent(Label = "Target external absolute URL", Order = 6, ExplanationText = "The absolute URL to which requests for the source URL will be redirected to.", ExplanationTextAsHtml = true)]
+    public string? TargetExternalAbsoluteUrl { get; set; }
 
     public void MapToRedirectInfo(RedirectInfo info)
     {
         info.RedirectSourceUrl = SourceUrl?.ToLower();
-        info.RedirectTargetWebPageItemGUID = TargetWebPageItem.First().WebPageGuid;
+        info.RedirectTargetWebPageItemGUID = TargetWebPageItem.FirstOrDefault()?.WebPageGuid ?? null;
         info.RedirectQueryString = TargetWebPageQueryString;
         info.RedirectAnchor = TargetWebPageAnchor;
+        info.RedirectTargetExternalAbsoluteUrl = TargetExternalAbsoluteUrl;
+        info.RedirectTargetType = RedirectTargetType;
     }
 }

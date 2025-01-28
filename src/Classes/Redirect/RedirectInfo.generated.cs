@@ -64,14 +64,24 @@ namespace XperienceCommunity.Redirects
             set => SetValue(nameof(RedirectSourceUrl), value);
         }
 
+        /// <summary>
+        /// Redirect target type.
+        /// </summary>
+        [DatabaseField]
+        public virtual string RedirectTargetType
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(RedirectTargetType)), String.Empty);
+            set => SetValue(nameof(RedirectTargetType), value);
+        }
+
 
         /// <summary>
         /// Redirect target web page item GUID.
         /// </summary>
         [DatabaseField]
-        public virtual Guid RedirectTargetWebPageItemGUID
+        public virtual Guid? RedirectTargetWebPageItemGUID
         {
-            get => ValidationHelper.GetGuid(GetValue(nameof(RedirectTargetWebPageItemGUID)), Guid.Empty);
+            get => GetValue(nameof(RedirectTargetWebPageItemGUID)) != null ? ValidationHelper.GetGuid(GetValue(nameof(RedirectTargetWebPageItemGUID)), Guid.Empty) : null;
             set => SetValue(nameof(RedirectTargetWebPageItemGUID), value);
         }
 
@@ -97,6 +107,16 @@ namespace XperienceCommunity.Redirects
             set => SetValue(nameof(RedirectAnchor), value);
         }
 
+
+        /// <summary>
+        /// Redirect target external absolute URL.
+        /// </summary>
+        [DatabaseField]
+        public virtual string RedirectTargetExternalAbsoluteUrl
+        {
+            get => GetStringValue(nameof(RedirectTargetExternalAbsoluteUrl), String.Empty);
+            set => SetValue(nameof(RedirectTargetExternalAbsoluteUrl), value);
+        }
 
 
         /// <summary>

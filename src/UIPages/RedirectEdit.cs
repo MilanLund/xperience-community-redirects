@@ -44,17 +44,21 @@ internal class RedirectEdit : ModelEditPage<RedirectEditModel>
                 return new RedirectEditModel();
             }
 
-            List<WebPageRelatedItem> targetWebPageItems = new List<WebPageRelatedItem>()
+            List<WebPageRelatedItem> targetWebPageItems = new List<WebPageRelatedItem>();
+
+            if (info.RedirectTargetWebPageItemGUID != null)
             {
-                new() { WebPageGuid = info.RedirectTargetWebPageItemGUID }
-            };
+                targetWebPageItems.Add(new WebPageRelatedItem() { WebPageGuid = info.RedirectTargetWebPageItemGUID.Value });
+            }
             
             _model = new RedirectEditModel()
             {
                 TargetWebPageItem = targetWebPageItems,
                 SourceUrl = info.RedirectSourceUrl,
                 TargetWebPageQueryString = info.RedirectQueryString,
-                TargetWebPageAnchor = info.RedirectAnchor
+                TargetWebPageAnchor = info.RedirectAnchor,
+                RedirectTargetType = info.RedirectTargetType,
+                TargetExternalAbsoluteUrl = info.RedirectTargetExternalAbsoluteUrl,
             };
 
             return _model;

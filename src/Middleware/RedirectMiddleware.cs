@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Net;
 using System.Web;
 using CMS.ContentEngine;
+using CMS.EventLog;
 using CMS.Websites;
 using CMS.Websites.Internal;
 using Microsoft.AspNetCore.Builder;
@@ -65,63 +67,79 @@ public class RedirectMiddleware
 
         if (matchingRedirectInfo != null)
         {
-            int? targetWebPageItemId = GetWebPageItemId(matchingRedirectInfo.RedirectTargetWebPageItemGUID);
-
-            if (targetWebPageItemId.HasValue)
+            if (matchingRedirectInfo.RedirectTargetType == "external")
             {
-                var languages = GetContentLangauges().ToList();
-
-                string firstSegment = context.Request.Path.ToString().Split('/').First();
-
-                if (context.Request.Path.ToString().Split('/').Length > 1)
+                var redirectTargetExternalAbsoluteUrl = matchingRedirectInfo.RedirectTargetExternalAbsoluteUrl?.Trim();
+                if (string.IsNullOrEmpty(redirectTargetExternalAbsoluteUrl))
                 {
-                    firstSegment = context.Request.Path.ToString().Split('/')[1];
-                }
-
-                var currentLanguage = languages.First(l => l.ContentLanguageIsDefault);
-                
-                if (!string.IsNullOrEmpty(firstSegment))
-                {
-                    firstSegment = firstSegment?.ToLower() ?? string.Empty;
-                    
-                    var matchedLanguage = languages.FirstOrDefault(l => 
-                        l.ContentLanguageName.Equals(firstSegment, StringComparison.CurrentCultureIgnoreCase)
-                        || l.ContentLanguageCultureFormat.Equals(firstSegment, StringComparison.CurrentCultureIgnoreCase));
-
-                    if (matchedLanguage != null)
-                    {
-                        currentLanguage = matchedLanguage;
-                    }
-                }
-                
-                string targetPageUrl = _webPageUrlRetriever.Retrieve(targetWebPageItemId.Value, currentLanguage?.ContentLanguageName).Result.RelativePath.Replace("~", "");
-
-                if (!requestPath.Equals(targetPageUrl, StringComparison.OrdinalIgnoreCase))
-                {
-                    // Add query string if one is configured
-                    if (!string.IsNullOrEmpty(matchingRedirectInfo?.RedirectQueryString))
-                    {
-                        var sanitizedQueryString = SanitizeQueryParameters(matchingRedirectInfo.RedirectQueryString.Trim().TrimStart('?'));
-                        if (!string.IsNullOrEmpty(sanitizedQueryString))
-                        {
-                            targetPageUrl = $"{targetPageUrl}?{sanitizedQueryString}";
-                        }
-                    }
-
-                    if (!string.IsNullOrEmpty(matchingRedirectInfo.RedirectAnchor))
-                    {
-                        var sanitizedAnchor = SanitizeAnchor(matchingRedirectInfo.RedirectAnchor.Trim().TrimStart('#'));
-                        if (!string.IsNullOrEmpty(sanitizedAnchor))
-                        {
-                            targetPageUrl = $"{targetPageUrl}#{sanitizedAnchor}";
-                        }
-                    }
-
-                    context.Response.Redirect(targetPageUrl, permanent: true);
-                
-                    await context.Response.CompleteAsync();
-                    
+                    await _next(context);
                     return;
+                }
+
+                context.Response.Redirect(redirectTargetExternalAbsoluteUrl, permanent: true);
+                await context.Response.CompleteAsync();
+                return;
+            }
+
+            if (matchingRedirectInfo.RedirectTargetWebPageItemGUID != null)
+            {
+                int? targetWebPageItemId = GetWebPageItemId(matchingRedirectInfo.RedirectTargetWebPageItemGUID);
+
+                if (targetWebPageItemId.HasValue)
+                {
+                    var languages = GetContentLangauges().ToList();
+
+                    string firstSegment = context.Request.Path.ToString().Split('/').First();
+
+                    if (context.Request.Path.ToString().Split('/').Length > 1)
+                    {
+                        firstSegment = context.Request.Path.ToString().Split('/')[1];
+                    }
+
+                    var currentLanguage = languages.First(l => l.ContentLanguageIsDefault);
+                    
+                    if (!string.IsNullOrEmpty(firstSegment))
+                    {
+                        firstSegment = firstSegment?.ToLower() ?? string.Empty;
+                        
+                        var matchedLanguage = languages.FirstOrDefault(l => 
+                            l.ContentLanguageName.Equals(firstSegment, StringComparison.CurrentCultureIgnoreCase)
+                            || l.ContentLanguageCultureFormat.Equals(firstSegment, StringComparison.CurrentCultureIgnoreCase));
+
+                        if (matchedLanguage != null)
+                        {
+                            currentLanguage = matchedLanguage;
+                        }
+                    }
+                    
+                    string targetPageUrl = _webPageUrlRetriever.Retrieve(targetWebPageItemId.Value, currentLanguage?.ContentLanguageName).Result.RelativePath.Replace("~", "");
+
+                    if (!requestPath.Equals(targetPageUrl, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Add query string if one is configured
+                        if (!string.IsNullOrEmpty(matchingRedirectInfo?.RedirectQueryString))
+                        {
+                            var sanitizedQueryString = SanitizeQueryParameters(matchingRedirectInfo.RedirectQueryString.Trim().TrimStart('?'));
+                            if (!string.IsNullOrEmpty(sanitizedQueryString))
+                            {
+                                targetPageUrl = $"{targetPageUrl}?{sanitizedQueryString}";
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(matchingRedirectInfo?.RedirectAnchor))
+                        {
+                            var sanitizedAnchor = SanitizeAnchor(matchingRedirectInfo.RedirectAnchor.Trim().TrimStart('#'));
+                            if (!string.IsNullOrEmpty(sanitizedAnchor))
+                            {
+                                targetPageUrl = $"{targetPageUrl}#{sanitizedAnchor}";
+                            }
+                        }
+
+                        context.Response.Redirect(targetPageUrl, permanent: true);
+                
+                        await context.Response.CompleteAsync();
+                        return;
+                    }
                 }
             }
         }
@@ -129,12 +147,17 @@ public class RedirectMiddleware
         await _next(context);
     }
 
-    private int? GetWebPageItemId(Guid webPageItemGuid)
+    private int? GetWebPageItemId(Guid? webPageItemGuid)
     {
+        if (webPageItemGuid == null)
+        {
+            return null;
+        }
+
         return WebPageItemInfo.Provider.Get()
             .TopN(1)
             .Column(nameof(WebPageItemInfo.WebPageItemID))
-            .WhereEquals(nameof(WebPageItemInfo.WebPageItemGUID), webPageItemGuid)
+            .WhereEquals(nameof(WebPageItemInfo.WebPageItemGUID), webPageItemGuid.Value)
             .GetScalarResult<int>();
     }
     

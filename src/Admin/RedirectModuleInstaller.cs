@@ -71,11 +71,29 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
 
         formItem = new FormFieldInfo
         {
+            Name = nameof(RedirectInfo.RedirectTargetType),
+            Visible = true,
+            DataType = FieldDataType.Text,
+            Enabled = true,
+            AllowEmpty = true,
+            Settings = new()
+            {
+                { nameof(DropDownComponent.Properties.Label), "Target type" },
+                { nameof(DropDownComponent.Properties.Options), ";Internal web page\nexternal;External URL" },
+                { nameof(DropDownComponent.Properties.ExplanationText), "Select the target type to which requests for the source URL will be redirected to." },
+                { nameof(DropDownComponent.Properties.ExplanationTextAsHtml), true }
+            }
+        };
+        formItem.SetComponentName(DropDownComponent.IDENTIFIER);
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
             Name = nameof(RedirectInfo.RedirectTargetWebPageItemGUID),
             Visible = true,
             DataType = FieldDataType.Guid,
             Enabled = true,
-            AllowEmpty = false,
+            AllowEmpty = true,
             Settings = new()
             {
                 { nameof(WebPageSelectorComponent.Properties.Label), "Target web page" },
@@ -91,7 +109,7 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
         formItem = new FormFieldInfo
         {
             Name = nameof(RedirectInfo.RedirectQueryString),
-            DataType = FieldDataType.LongText,
+            DataType = FieldDataType.Text,
             AllowEmpty = true,
             Visible = true,
             Enabled = true,
@@ -108,7 +126,7 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
         formItem = new FormFieldInfo
         {
             Name = nameof(RedirectInfo.RedirectAnchor),
-            DataType = FieldDataType.LongText,
+            DataType = FieldDataType.Text,
             AllowEmpty = true,
             Visible = true,
             Enabled = true,
@@ -116,6 +134,23 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
             {
                 { nameof(TextInputProperties.Label), "Target web page anchor" },
                 { nameof(TextInputProperties.ExplanationText), "The anchor to be appended to the target web page URL." },
+                { nameof(TextInputProperties.ExplanationTextAsHtml), true },
+            }
+        };
+        formItem.SetComponentName(TextInputComponent.IDENTIFIER);
+        formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
+            Name = nameof(RedirectInfo.RedirectTargetExternalAbsoluteUrl),
+            DataType = FieldDataType.Text,
+            AllowEmpty = true,
+            Visible = true,
+            Enabled = true,
+            Settings = new()
+            {
+                { nameof(TextInputProperties.Label), "Target external absolute URL" },
+                { nameof(TextInputProperties.ExplanationText), "The absolute URL to which requests for the source URL will be redirected to." },
                 { nameof(TextInputProperties.ExplanationTextAsHtml), true },
             }
         };
