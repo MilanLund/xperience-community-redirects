@@ -1,5 +1,3 @@
-using System.Net;
-using System.Web;
 using CMS.ContentEngine;
 using CMS.Websites;
 using CMS.Websites.Internal;
@@ -7,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using XperienceCommunity.Redirects.Services;
 using static XperienceCommunity.Redirects.Admin.RedirectConstants;
+using XperienceCommunity.Redirects.Utilities;
 
 namespace XperienceCommunity.Redirects;
 
@@ -28,124 +27,170 @@ public class RedirectMiddleware
     public RedirectMiddleware(
         RequestDelegate next,
         IRedirectService redirectService,
-        IWebPageUrlRetriever webPageUrlRetriever
-        )
+        IWebPageUrlRetriever webPageUrlRetriever)
     {
-        _webPageUrlRetriever = webPageUrlRetriever;
         _next = next;
         _redirectService = redirectService;
+        _webPageUrlRetriever = webPageUrlRetriever;
     }
     
     public async Task InvokeAsync(HttpContext context)
     {
-        if (!context.Request.Headers.Accept.ToString().Contains("text/html", StringComparison.OrdinalIgnoreCase))
+        if (!IsHtmlRequest(context) || IsExcludedPath(context))
         {
             await _next(context);
             return;
         }
-        
-        string requestPath = context.Request.Path.Value?.ToLower() ?? string.Empty;
 
-        foreach (string excludedPath in ExcludedStartingPaths)
-        {
-            if (context.Request.Path.StartsWithSegments(excludedPath, StringComparison.OrdinalIgnoreCase))
-            {
-                await _next(context);
-                return;
-            }
-        }
-        
-        var allRedirects = await _redirectService.GetRedirects();
-        if (allRedirects?.Any() != true)
+        var requestPath = GetNormalizedRequestPath(context);
+        var redirects = await GetRedirectsAsync();
+        var matchingRedirect = redirects?.FirstOrDefault(r => r.RedirectSourceUrl == requestPath);
+
+        if (matchingRedirect == null)
         {
             await _next(context);
             return;
         }
-        
-        RedirectInfo? matchingRedirectInfo = allRedirects.FirstOrDefault(r => r.RedirectSourceUrl == requestPath);
 
-        if (matchingRedirectInfo != null)
+        await HandleRedirect(context, matchingRedirect);
+    }
+
+    private static bool IsHtmlRequest(HttpContext context) =>
+        context.Request.Headers.Accept.ToString()
+            .Contains("text/html", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsExcludedPath(HttpContext context) =>
+        ExcludedStartingPaths.Any(excludedPath => 
+            context.Request.Path.StartsWithSegments(excludedPath, StringComparison.OrdinalIgnoreCase));
+
+    private async Task<IEnumerable<RedirectInfo>?> GetRedirectsAsync()
+    {
+        return await _redirectService.GetRedirects();
+    }
+
+    private static string GetNormalizedRequestPath(HttpContext context) =>
+        context.Request.Path.Value?.ToLower() ?? string.Empty;
+
+    private async Task HandleRedirect(HttpContext context, RedirectInfo redirect)
+    {
+        var permanent = IsPermanentRedirect(redirect.RedirectResponseCode);
+
+        if (redirect.RedirectTargetType == "url")
         {
-            bool permanent = IsPermanentRedirect(matchingRedirectInfo.RedirectResponseCode);
-
-            if (matchingRedirectInfo.RedirectTargetType == "url")
-            {
-                var redirectTargetUrl = matchingRedirectInfo.RedirectTargetUrl?.Trim();
-                if (string.IsNullOrEmpty(redirectTargetUrl))
-                {
-                    await _next(context);
-                    return;
-                }
-
-                context.Response.Redirect(redirectTargetUrl, permanent: permanent);
-                await context.Response.CompleteAsync();
-                return;
-            }
-
-            if (matchingRedirectInfo.RedirectTargetWebPageItemGUID != null)
-            {
-                int? targetWebPageItemId = GetWebPageItemId(matchingRedirectInfo.RedirectTargetWebPageItemGUID);
-
-                if (targetWebPageItemId.HasValue)
-                {
-                    var languages = GetContentLangauges().ToList();
-
-                    string firstSegment = context.Request.Path.ToString().Split('/').First();
-
-                    if (context.Request.Path.ToString().Split('/').Length > 1)
-                    {
-                        firstSegment = context.Request.Path.ToString().Split('/')[1];
-                    }
-
-                    var currentLanguage = languages.First(l => l.ContentLanguageIsDefault);
-                    
-                    if (!string.IsNullOrEmpty(firstSegment))
-                    {
-                        firstSegment = firstSegment?.ToLower() ?? string.Empty;
-                        
-                        var matchedLanguage = languages.FirstOrDefault(l => 
-                            l.ContentLanguageName.Equals(firstSegment, StringComparison.CurrentCultureIgnoreCase)
-                            || l.ContentLanguageCultureFormat.Equals(firstSegment, StringComparison.CurrentCultureIgnoreCase));
-
-                        if (matchedLanguage != null)
-                        {
-                            currentLanguage = matchedLanguage;
-                        }
-                    }
-                    
-                    string targetPageUrl = _webPageUrlRetriever.Retrieve(targetWebPageItemId.Value, currentLanguage?.ContentLanguageName).Result.RelativePath.Replace("~", "");
-
-                    if (!requestPath.Equals(targetPageUrl, StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Add query string if one is configured
-                        if (!string.IsNullOrEmpty(matchingRedirectInfo?.RedirectQueryString))
-                        {
-                            var sanitizedQueryString = SanitizeQueryParameters(matchingRedirectInfo.RedirectQueryString.Trim().TrimStart('?'));
-                            if (!string.IsNullOrEmpty(sanitizedQueryString))
-                            {
-                                targetPageUrl = $"{targetPageUrl}?{sanitizedQueryString}";
-                            }
-                        }
-
-                        if (!string.IsNullOrEmpty(matchingRedirectInfo?.RedirectAnchor))
-                        {
-                            var sanitizedAnchor = SanitizeAnchor(matchingRedirectInfo.RedirectAnchor.Trim().TrimStart('#'));
-                            if (!string.IsNullOrEmpty(sanitizedAnchor))
-                            {
-                                targetPageUrl = $"{targetPageUrl}#{sanitizedAnchor}";
-                            }
-                        }
-
-                        context.Response.Redirect(targetPageUrl, permanent: permanent);
-                
-                        await context.Response.CompleteAsync();
-                        return;
-                    }
-                }
-            }
+            await HandleUrlRedirect(context, redirect, permanent);
+            return;
         }
 
-        await _next(context);
+        if (redirect.RedirectTargetWebPageItemGUID != null)
+        {
+            await HandlePageRedirect(context, redirect, permanent);
+        }
+        else
+        {
+            await _next(context);
+        }
+    }
+
+    private async Task HandleUrlRedirect(HttpContext context, RedirectInfo redirect, bool permanent)
+    {
+        var redirectTargetUrl = redirect.RedirectTargetUrl?.Trim();
+        if (string.IsNullOrEmpty(redirectTargetUrl))
+        {
+            await _next(context);
+            return;
+        }
+
+        var sanitizedUrl = UrlSanitizer.SanitizeUrl(redirectTargetUrl);
+        if (string.IsNullOrEmpty(sanitizedUrl))
+        {
+            await _next(context);
+            return;
+        }
+
+        await PerformRedirect(context, sanitizedUrl, permanent);
+    }
+
+    private async Task HandlePageRedirect(HttpContext context, RedirectInfo redirect, bool permanent)
+    {
+        var targetWebPageItemId = GetWebPageItemId(redirect.RedirectTargetWebPageItemGUID);
+        if (!targetWebPageItemId.HasValue)
+        {
+            await _next(context);
+            return;
+        }
+
+        var currentLanguage = GetCurrentLanguage(context);
+        var targetPageUrl = await BuildTargetPageUrl(targetWebPageItemId.Value, currentLanguage, redirect);
+        
+        var requestPath = GetNormalizedRequestPath(context);
+        if (requestPath.Equals(targetPageUrl, StringComparison.OrdinalIgnoreCase))
+        {
+            await _next(context);
+            return;
+        }
+
+        await PerformRedirect(context, targetPageUrl, permanent);
+    }
+
+    private async Task<string> BuildTargetPageUrl(int targetWebPageItemId, ContentLanguageInfo currentLanguage, RedirectInfo redirect)
+    {
+        var baseUrl = await GetBasePageUrl(targetWebPageItemId, currentLanguage);
+        var urlWithQuery = AppendQueryString(baseUrl, redirect.RedirectQueryString);
+        return AppendAnchor(urlWithQuery, redirect.RedirectAnchor);
+    }
+
+    private async Task<string> GetBasePageUrl(int targetWebPageItemId, ContentLanguageInfo currentLanguage)
+    {
+        var pageUrl = await _webPageUrlRetriever.Retrieve(targetWebPageItemId, currentLanguage?.ContentLanguageName);
+        return UrlSanitizer.EncodePath(pageUrl.RelativePath.Replace("~", ""));
+    }
+
+    private static string AppendQueryString(string url, string? queryString)
+    {
+        if (string.IsNullOrEmpty(queryString))
+        {
+            return url;
+        }
+
+        var sanitizedQuery = UrlSanitizer.SanitizeQueryParameters(queryString.Trim().TrimStart('?'));
+        return string.IsNullOrEmpty(sanitizedQuery) ? url : $"{url}?{sanitizedQuery}";
+    }
+
+    private static string AppendAnchor(string url, string? anchor)
+    {
+        if (string.IsNullOrEmpty(anchor))
+        {
+            return url;
+        }
+
+        var sanitizedAnchor = UrlSanitizer.SanitizeAnchor(anchor.Trim().TrimStart('#'));
+        return string.IsNullOrEmpty(sanitizedAnchor) ? url : $"{url}#{sanitizedAnchor}";
+    }
+
+    private ContentLanguageInfo GetCurrentLanguage(HttpContext context)
+    {
+        var languages = GetContentLanguages().ToList();
+        var pathSegments = context.Request.Path.ToString().Split('/', StringSplitOptions.RemoveEmptyEntries);
+        
+        if (pathSegments.Length == 0)
+        {
+            return languages.First(l => l.ContentLanguageIsDefault);
+        }
+
+        var firstSegment = pathSegments[0].ToLower();
+        return FindLanguageBySegment(languages, firstSegment) 
+               ?? languages.First(l => l.ContentLanguageIsDefault);
+    }
+
+    private static ContentLanguageInfo? FindLanguageBySegment(IEnumerable<ContentLanguageInfo> languages, string segment) =>
+        languages.FirstOrDefault(l =>
+            l.ContentLanguageName.Equals(segment, StringComparison.OrdinalIgnoreCase) ||
+            l.ContentLanguageCultureFormat.Equals(segment, StringComparison.OrdinalIgnoreCase));
+
+    private static async Task PerformRedirect(HttpContext context, string url, bool permanent)
+    {
+        context.Response.Redirect(url, permanent);
+        await context.Response.CompleteAsync();
     }
 
     private int? GetWebPageItemId(Guid? webPageItemGuid)
@@ -162,109 +207,22 @@ public class RedirectMiddleware
             .GetScalarResult<int>();
     }
     
-    private IEnumerable<ContentLanguageInfo> GetContentLangauges()
-    {
-        return ContentLanguageInfo.Provider.Get()
-            .Columns(nameof(ContentLanguageInfo.ContentLanguageName),
+    private static IEnumerable<ContentLanguageInfo> GetContentLanguages() =>
+        ContentLanguageInfo.Provider.Get()
+            .Columns(
+                nameof(ContentLanguageInfo.ContentLanguageName),
                 nameof(ContentLanguageInfo.ContentLanguageCultureFormat),
                 nameof(ContentLanguageInfo.ContentLanguageIsDefault))
             .ToList();
-    }
 
-    private string SanitizeQueryParameters(string queryString)
-    {
-        if (string.IsNullOrEmpty(queryString))
-        {
-            return queryString;
-        }
-
-        // Validate query string length
-        if (queryString.Length > 2048)
-        {
-            return string.Empty;
-        }
-
-        var parameters = queryString.Split('&', StringSplitOptions.RemoveEmptyEntries);
-        
-        var encodedParameters = parameters.Select(ParseAndEncodeQueryParameter)
-            .Where(param => param != null);
-
-        return string.Join("&", encodedParameters);
-    }
-
-    private string? ParseAndEncodeQueryParameter(string param)
-    {
-        var parts = param.Split('=', 2); // Split on first '=' only
-        var key = parts[0].Trim();
-
-        if (!IsValidQueryStringKey(key))
-        {
-            return null;
-        }
-
-        // If no value part exists, return just the key
-        if (parts.Length == 1)
-        {
-            return key;
-        }
-
-        // Encode the value part
-        var value = parts[1].Trim();
-        var encodedValue = HttpUtility.UrlEncode(
-            WebUtility.HtmlEncode(value)
-        );
-        
-        return $"{key}={encodedValue}";
-    }
-
-    private bool IsValidQueryStringKey(string key)
-    {
-        // Allow characters that are valid in query parameter keys:
-        // - alphanumeric
-        // - !$'()*+,;:@_.-
-        // Excluding potential dangerous characters like <>"\{}|^`%#& and spaces
-        return !string.IsNullOrEmpty(key) 
-               && key.Length <= 200 
-               && System.Text.RegularExpressions.Regex.IsMatch(key, @"^[a-zA-Z0-9!$'()*+,;:@_.\-]+$");
-    }
-
-    private string SanitizeAnchor(string anchor)
-    {
-        if (string.IsNullOrEmpty(anchor))
-        {
-            return string.Empty;
-        }
-
-        // Validate anchor length (matching query string max length)
-        if (anchor.Length > 2048)
-        {
-            return string.Empty;
-        }
-
-        // Allow characters that are valid in URL fragments:
-        // - alphanumeric
-        // - !$&'()*+,;=-._~:@/?
-        // Excluding potential dangerous characters like <>"{}|\^`%# and spaces
-        return System.Text.RegularExpressions.Regex.IsMatch(anchor, @"^[a-zA-Z0-9!$&'()*+,;=\-._~:@/?]+$") 
-            ? HttpUtility.UrlEncode(anchor) 
-            : string.Empty;
-    }
-
-    private bool IsPermanentRedirect(string responseCode)
-    {
-        if (string.IsNullOrEmpty(responseCode))
-        {
-            responseCode = RedirectResponseCodeConstants.Permanent;
-        }
-
-        return responseCode == RedirectResponseCodeConstants.Permanent;
-    }
+    private static bool IsPermanentRedirect(string? responseCode) =>
+        string.IsNullOrEmpty(responseCode)
+            ? true  // Default to permanent
+            : responseCode == RedirectResponseCodeConstants.Permanent;
 }
 
 public static class RedirectMiddlewareExtensions
 {
-    public static IApplicationBuilder UseXperienceCommunityRedirects(this IApplicationBuilder builder)
-    {
-        return builder.UseMiddleware<RedirectMiddleware>();
-    }
+    public static IApplicationBuilder UseXperienceCommunityRedirects(this IApplicationBuilder builder) =>
+        builder.UseMiddleware<RedirectMiddleware>();
 }
