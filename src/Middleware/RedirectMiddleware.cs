@@ -6,6 +6,7 @@ using CMS.Websites.Internal;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using XperienceCommunity.Redirects.Services;
+using static XperienceCommunity.Redirects.Admin.RedirectConstants;
 
 namespace XperienceCommunity.Redirects;
 
@@ -67,16 +68,16 @@ public class RedirectMiddleware
         {
             bool permanent = IsPermanentRedirect(matchingRedirectInfo.RedirectResponseCode);
 
-            if (matchingRedirectInfo.RedirectTargetType == "external")
+            if (matchingRedirectInfo.RedirectTargetType == "url")
             {
-                var redirectTargetExternalAbsoluteUrl = matchingRedirectInfo.RedirectTargetExternalAbsoluteUrl?.Trim();
-                if (string.IsNullOrEmpty(redirectTargetExternalAbsoluteUrl))
+                var redirectTargetUrl = matchingRedirectInfo.RedirectTargetUrl?.Trim();
+                if (string.IsNullOrEmpty(redirectTargetUrl))
                 {
                     await _next(context);
                     return;
                 }
 
-                context.Response.Redirect(redirectTargetExternalAbsoluteUrl, permanent: permanent);
+                context.Response.Redirect(redirectTargetUrl, permanent: permanent);
                 await context.Response.CompleteAsync();
                 return;
             }
@@ -249,10 +250,14 @@ public class RedirectMiddleware
             : string.Empty;
     }
 
-    private bool IsPermanentRedirect(string? responseCode)
+    private bool IsPermanentRedirect(string responseCode)
     {
-        int redirectResponseCode = int.TryParse(responseCode, out int parsedCode) ? parsedCode : 301;
-        return redirectResponseCode == 301;
+        if (string.IsNullOrEmpty(responseCode))
+        {
+            responseCode = RedirectResponseCodeConstants.Permanent;
+        }
+
+        return responseCode == RedirectResponseCodeConstants.Permanent;
     }
 }
 

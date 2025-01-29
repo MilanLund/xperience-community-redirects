@@ -63,6 +63,8 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
             Settings = new()
             {
                 { nameof(TextInputProperties.Label), "Source URL" },
+                { nameof(TextInputProperties.ExplanationText), "Enter the relative URL to be redirected." },
+                { nameof(TextInputProperties.ExplanationTextAsHtml), true }
             }
         };
         formItem.SetComponentName(TextAreaComponent.IDENTIFIER);
@@ -78,8 +80,8 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
             Settings = new()
             {
                 { nameof(DropDownComponent.Properties.Label), "Target type" },
-                { nameof(DropDownComponent.Properties.Options), ";Internal web page\nexternal;External URL" },
-                { nameof(DropDownComponent.Properties.ExplanationText), "Select the target type to which requests for the source URL will be redirected to." },
+                { nameof(DropDownComponent.Properties.Options), ";Internal web page\nurl;URL" },
+                { nameof(DropDownComponent.Properties.ExplanationText), "Select the target type to which requests for the source URL will be redirected to. Fallbacks to `Internal web page` if not set." },
                 { nameof(DropDownComponent.Properties.ExplanationTextAsHtml), true }
             }
         };
@@ -141,15 +143,15 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
 
         formItem = new FormFieldInfo
         {
-            Name = nameof(RedirectInfo.RedirectTargetExternalAbsoluteUrl),
+            Name = nameof(RedirectInfo.RedirectTargetUrl),
             DataType = FieldDataType.Text,
             AllowEmpty = true,
             Visible = true,
             Enabled = true,
             Settings = new()
             {
-                { nameof(TextInputProperties.Label), "Target external absolute URL" },
-                { nameof(TextInputProperties.ExplanationText), "The absolute URL to which requests for the source URL will be redirected to." },
+                { nameof(TextInputProperties.Label), "Target URL" },
+                { nameof(TextInputProperties.ExplanationText), "The URL to which requests for the source URL will be redirected. Could be relative or absolute. Examples: `https://www.example.com/page` or `/sitemap.xml`" },
                 { nameof(TextInputProperties.ExplanationTextAsHtml), true },
             }
         };
@@ -166,8 +168,8 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
             Settings = new()
             {
                 { nameof(DropDownComponent.Properties.Label), "Redirect code" },
-                { nameof(DropDownComponent.Properties.Options), ";301 – Permanent\n302;302 – Temporary" },
-                { nameof(DropDownComponent.Properties.ExplanationText), "Select the redirect code to be used for the redirect." },
+                { nameof(DropDownComponent.Properties.Options), $";{RedirectResponseCodeConstants.Permanent} – Permanent\n{RedirectResponseCodeConstants.Temporary};{RedirectResponseCodeConstants.Temporary} – Temporary" },
+                { nameof(DropDownComponent.Properties.ExplanationText), $"Select the redirect code to be used for the redirect. Fallbacks to {RedirectResponseCodeConstants.Permanent} if not set." },
                 { nameof(DropDownComponent.Properties.ExplanationTextAsHtml), true }
             }
         };

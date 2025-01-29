@@ -6,6 +6,7 @@ using CMS.Websites;
 using CMS.Websites.Internal;
 using Kentico.Xperience.Admin.Base;
 using XperienceCommunity.Redirects.UIPages;
+using static XperienceCommunity.Redirects.Admin.RedirectConstants;
 
 [assembly: UIPage(
     parentType: typeof(RedirectApplicationPage),
@@ -38,12 +39,12 @@ public class RedirectListing : ListingPage
 
         PageConfiguration.ColumnConfigurations
             .AddColumn(nameof(RedirectInfo.RedirectSourceUrl), "Source URL", searchable: true)
-            .AddColumn(nameof(RedirectInfo.RedirectTargetWebPageItemGUID), "Target web page", formatter: GetWebPageUrl)
+            .AddColumn(nameof(RedirectInfo.RedirectTargetWebPageItemGUID), "Target URL", formatter: GetWebPageUrl)
             .AddColumn(nameof(RedirectInfo.RedirectResponseCode), "Redirect code", formatter: GetRedirectCode)
             .AddColumn(nameof(RedirectInfo.RedirectQueryString), "Target web page query string", visible: false)
             .AddColumn(nameof(RedirectInfo.RedirectAnchor), "Target web page anchor", visible: false)
             .AddColumn(nameof(RedirectInfo.RedirectTargetType), "Target type", visible: false)
-            .AddColumn(nameof(RedirectInfo.RedirectTargetExternalAbsoluteUrl), "Target external URL", visible: false);
+            .AddColumn(nameof(RedirectInfo.RedirectTargetUrl), "Target URL", visible: false);
 
         PageConfiguration.AddEditRowAction<RedirectEditSection>();
         
@@ -58,10 +59,10 @@ public class RedirectListing : ListingPage
         dataContainer.TryGetValue(nameof(RedirectInfo.RedirectTargetType), out object? targetTypeObject);
         string targetType = ValidationHelper.GetString(targetTypeObject, "");
 
-        if (targetType == "external")
+        if (targetType == "url")
         {
-            dataContainer.TryGetValue(nameof(RedirectInfo.RedirectTargetExternalAbsoluteUrl), out object? targetExternalUrlObject);
-            return ValidationHelper.GetString(targetExternalUrlObject, "");
+            dataContainer.TryGetValue(nameof(RedirectInfo.RedirectTargetUrl), out object? targetUrlObject);
+            return ValidationHelper.GetString(targetUrlObject, "");
         }
 
         Guid webPageItemGuid = ValidationHelper.GetGuid(objectValue, Guid.Empty);
@@ -116,24 +117,24 @@ public class RedirectListing : ListingPage
             }
         }
 
-        return "Page deleted";
+        return "Page not selected";
     }
 
     private string GetRedirectCode(object objectValue, IDataContainer dataContainer)
-    {
-        int redirectResponseCode = int.TryParse(ValidationHelper.GetString(objectValue, ""), out int parsedCode) ? parsedCode : 301;
-        
-        if (redirectResponseCode == 301)
+    {        
+        string redirectResponseCode = ValidationHelper.GetString(objectValue, RedirectResponseCodeConstants.Permanent);
+
+        if (string.IsNullOrEmpty(redirectResponseCode) || redirectResponseCode == RedirectResponseCodeConstants.Permanent)
         {
-            return "301 – Permanent";
+            return $"{RedirectResponseCodeConstants.Permanent} – Permanent";
         }
 
-        if (redirectResponseCode == 302)
+        if (redirectResponseCode == RedirectResponseCodeConstants.Temporary)
         {
-            return "302 – Temporary";
+            return $"{RedirectResponseCodeConstants.Temporary} – Temporary";
         }
 
-        return parsedCode.ToString();
+        return redirectResponseCode;
     }
 
     private string GetDefaultLanguageName()

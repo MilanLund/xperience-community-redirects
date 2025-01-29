@@ -3,6 +3,7 @@ using CMS.Websites;
 using Kentico.Xperience.Admin.Base;
 using Kentico.Xperience.Admin.Base.Forms;
 using XperienceCommunity.Redirects.UIPages;
+using static XperienceCommunity.Redirects.Admin.RedirectConstants;
 using IFormItemCollectionProvider = Kentico.Xperience.Admin.Base.Forms.Internal.IFormItemCollectionProvider;
 
 [assembly: UIPage(
@@ -45,10 +46,16 @@ internal class RedirectEdit : ModelEditPage<RedirectEditModel>
             }
 
             List<WebPageRelatedItem> targetWebPageItems = new List<WebPageRelatedItem>();
+            string redirectResponseCode = info.RedirectResponseCode;
 
             if (info.RedirectTargetWebPageItemGUID != null)
             {
                 targetWebPageItems.Add(new WebPageRelatedItem() { WebPageGuid = info.RedirectTargetWebPageItemGUID.Value });
+            }
+
+            if (string.IsNullOrEmpty(redirectResponseCode))
+            {
+                redirectResponseCode = RedirectResponseCodeConstants.Permanent;
             }
             
             _model = new RedirectEditModel()
@@ -58,8 +65,8 @@ internal class RedirectEdit : ModelEditPage<RedirectEditModel>
                 TargetWebPageQueryString = info.RedirectQueryString,
                 TargetWebPageAnchor = info.RedirectAnchor,
                 RedirectTargetType = info.RedirectTargetType,
-                TargetExternalAbsoluteUrl = info.RedirectTargetExternalAbsoluteUrl,
-                ResponseCode = info.RedirectResponseCode,
+                TargetUrl = info.RedirectTargetUrl,
+                ResponseCode = redirectResponseCode,
             };
 
             return _model;

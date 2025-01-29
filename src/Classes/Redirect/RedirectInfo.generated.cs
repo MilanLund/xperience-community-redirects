@@ -6,6 +6,7 @@ using CMS;
 using CMS.DataEngine;
 using CMS.Helpers;
 using XperienceCommunity.Redirects;
+using static XperienceCommunity.Redirects.Admin.RedirectConstants;
 
 [assembly: RegisterObjectType(typeof(RedirectInfo), RedirectInfo.OBJECT_TYPE)]
 
@@ -109,13 +110,13 @@ namespace XperienceCommunity.Redirects
 
 
         /// <summary>
-        /// Redirect target external absolute URL.
+        /// Redirect target URL.
         /// </summary>
         [DatabaseField]
-        public virtual string RedirectTargetExternalAbsoluteUrl
+        public virtual string RedirectTargetUrl
         {
-            get => GetStringValue(nameof(RedirectTargetExternalAbsoluteUrl), String.Empty);
-            set => SetValue(nameof(RedirectTargetExternalAbsoluteUrl), value);
+            get => GetStringValue(nameof(RedirectTargetUrl), String.Empty);
+            set => SetValue(nameof(RedirectTargetUrl), value);
         }
 
         /// <summary>

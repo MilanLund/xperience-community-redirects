@@ -9,4 +9,10 @@ internal static class RedirectConstants
         public const string ResourceDescription = "Allow redirects to be added for web pages";
         public const bool ResourceIsInDevelopment = false;
     }
+
+    internal static class RedirectResponseCodeConstants
+    {
+        public const string Permanent = "301";
+        public const string Temporary = "302";
+    }
 }

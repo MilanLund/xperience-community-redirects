@@ -2,20 +2,25 @@
 using Kentico.Xperience.Admin.Base.FormAnnotations;
 using Kentico.Xperience.Admin.Websites;
 using Kentico.Xperience.Admin.Websites.FormAnnotations;
+using static XperienceCommunity.Redirects.Admin.RedirectConstants;
 
 namespace XperienceCommunity.Redirects.UIPages;
 
 internal class RedirectEditModel
 {
     [RequiredValidationRule]
-    [TextInputComponent(Label = "Source URL", Order = 1)]
+    [TextInputComponent(
+        Label = "Source URL", 
+        Order = 1, 
+        ExplanationText = "Enter the relative URL to be redirected.", 
+        ExplanationTextAsHtml = true)]
     public string? SourceUrl { get; set; }
 
     [DropDownComponent(
         Label = "Target type",
         Order = 2,
-        Options = ";Internal web page\nexternal;External URL",
-        ExplanationText = "Select the target type to which requests for the source URL will be redirected to.",
+        Options = ";Internal web page\nurl;URL",
+        ExplanationText = "Select the target type to which requests for the source URL will be redirected to. Fallbacks to `Internal web page` if not set.",
         ExplanationTextAsHtml = true)]
     public string? RedirectTargetType { get; set; }
 
@@ -45,19 +50,19 @@ internal class RedirectEditModel
         ExplanationTextAsHtml = true)]
     public string? TargetWebPageAnchor { get; set; }
 
-    [VisibleIfEqualTo(nameof(RedirectTargetType), "external")]
+    [VisibleIfEqualTo(nameof(RedirectTargetType), "url")]
     [TextInputComponent(
-        Label = "Target external absolute URL", 
+        Label = "Target URL", 
         Order = 6, 
-        ExplanationText = "The absolute URL to which requests for the source URL will be redirected to.", 
+        ExplanationText = "The URL to which requests for the source URL will be redirected. Could be relative or absolute. Examples: `https://www.example.com/page` or `/sitemap.xml`", 
         ExplanationTextAsHtml = true)]
-    public string? TargetExternalAbsoluteUrl { get; set; }
+    public string? TargetUrl { get; set; }
 
     [DropDownComponent(
         Label = "Response code",
         Order = 7,
-        Options = ";301 – Permanent\n302;302 – Temporary",
-        ExplanationText = "Select the redirect code to be used for the redirect.",
+        Options = $";{RedirectResponseCodeConstants.Permanent} – Permanent\n{RedirectResponseCodeConstants.Temporary};{RedirectResponseCodeConstants.Temporary} – Temporary",
+        ExplanationText = $"Select the redirect code to be used for the redirect. Fallbacks to {RedirectResponseCodeConstants.Permanent} if not set.",
         ExplanationTextAsHtml = true)]
     public string? ResponseCode { get; set; }
 
@@ -67,7 +72,7 @@ internal class RedirectEditModel
         info.RedirectTargetWebPageItemGUID = TargetWebPageItem.FirstOrDefault()?.WebPageGuid ?? null;
         info.RedirectQueryString = TargetWebPageQueryString;
         info.RedirectAnchor = TargetWebPageAnchor;
-        info.RedirectTargetExternalAbsoluteUrl = TargetExternalAbsoluteUrl;
+        info.RedirectTargetUrl = TargetUrl;
         info.RedirectTargetType = RedirectTargetType;
         info.RedirectResponseCode = ResponseCode;
     }
