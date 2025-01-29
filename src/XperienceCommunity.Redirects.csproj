@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -13,7 +12,7 @@
         <RepositoryUrl>https://github.com/michael419/xperience-community-redirects/</RepositoryUrl>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <RepositoryType>git</RepositoryType>
-        <PackageTags>kentico xperience urlredirects 301redirects</PackageTags>
+        <PackageTags>kentico xperience urlredirects 301redirects 302redirects</PackageTags>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Version>1.0.3</Version>
 		<PackageReleaseNotes>Fixed an issue where it was not possible to create redirects</PackageReleaseNotes>
@@ -34,5 +33,4 @@
 	    <PackagePath></PackagePath>
 	  </None>
     </ItemGroup>
-
 </Project>

@@ -1,7 +1,6 @@
 ﻿using CMS.Membership;
 using Kentico.Xperience.Admin.Base;
 using Kentico.Xperience.Admin.Base.UIPages;
-using XperienceCommunity.Redirects.Admin;
 using XperienceCommunity.Redirects.UIPages;
 
 [assembly: UIApplication(

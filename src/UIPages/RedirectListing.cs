@@ -1,14 +1,9 @@
-﻿using System.Globalization;
-using CMS.Base;
+﻿using CMS.Base;
 using CMS.ContentEngine;
-using CMS.ContentEngine.Internal;
-using CMS.Core;
-using CMS.DataEngine;
 using CMS.Helpers;
 using CMS.Membership;
 using CMS.Websites;
 using CMS.Websites.Internal;
-using Kentico.Content.Web.Mvc.Routing;
 using Kentico.Xperience.Admin.Base;
 using XperienceCommunity.Redirects.UIPages;
 
@@ -53,23 +48,6 @@ public class RedirectListing : ListingPage
         PageConfiguration.AddEditRowAction<RedirectEditSection>();
         
         await base.ConfigurePage();
-    }
-
-    private string GetRedirectCode(object objectValue, IDataContainer dataContainer)
-    {
-        int redirectResponseCode = int.TryParse(ValidationHelper.GetString(objectValue, ""), out int parsedCode) ? parsedCode : 301;
-        
-        if (redirectResponseCode == 301)
-        {
-            return "301 – Permanent";
-        }
-
-        if (redirectResponseCode == 302)
-        {
-            return "302 – Temporary";
-        }
-
-        return parsedCode.ToString();
     }
 
     [PageCommand(Permission = SystemPermissions.DELETE)]
@@ -139,6 +117,23 @@ public class RedirectListing : ListingPage
         }
 
         return "Page deleted";
+    }
+
+    private string GetRedirectCode(object objectValue, IDataContainer dataContainer)
+    {
+        int redirectResponseCode = int.TryParse(ValidationHelper.GetString(objectValue, ""), out int parsedCode) ? parsedCode : 301;
+        
+        if (redirectResponseCode == 301)
+        {
+            return "301 – Permanent";
+        }
+
+        if (redirectResponseCode == 302)
+        {
+            return "302 – Temporary";
+        }
+
+        return parsedCode.ToString();
     }
 
     private string GetDefaultLanguageName()

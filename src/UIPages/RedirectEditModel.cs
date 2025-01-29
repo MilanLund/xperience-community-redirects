@@ -1,11 +1,7 @@
-﻿using CMS.ContentEngine;
-using CMS.DataEngine;
-using CMS.Websites;
-using CMS.Websites.Internal;
+﻿using CMS.Websites;
 using Kentico.Xperience.Admin.Base.FormAnnotations;
 using Kentico.Xperience.Admin.Websites;
 using Kentico.Xperience.Admin.Websites.FormAnnotations;
-using XperienceCommunity.Redirects;
 
 namespace XperienceCommunity.Redirects.UIPages;
 
@@ -37,7 +33,7 @@ internal class RedirectEditModel
     [TextInputComponent(
         Label = "Target web page query string",
         Order = 4,
-        ExplanationText = "The query string to be appended to the target web page URL. Example: `?param1=value1&param2=value2`",
+        ExplanationText = "The query string to be appended to the target web page URL. Example: `?param1=value1&amp;param2=value2`",
         ExplanationTextAsHtml = true)]
     public string? TargetWebPageQueryString { get; set; }
 

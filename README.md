@@ -27,7 +27,7 @@ Clicking `New redirect` will enable you to create a new redirect, entering the `
 ## Redirect functionality
 
 - The website checks each incoming request URL against a list of predefined redirects created via a custom module.
-- If a match is found, a 301 redirect is issued, and the user is automatically redirected to the target webpage.
+- If a match is found, a 301 or 302 redirect is issued, and the user is automatically redirected to the target webpage.
 - Redirects are created on a per web channel basis, ensuring that you must select the relevant web channel when choosing the target page.
 - The functionality will attempt to redirect the user to the correct language variant of the target page by analyzing the source URL for the presence of a culture code (e.g. `en-GB`) or a language name (e.g. `en`) URL prefix.
 - Users will be redirected based on the target page's `canonical URL` setting, whether it is the `system URL` or the `vanity URL` defined for the page.

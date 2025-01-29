@@ -1,5 +1,4 @@
 ﻿using Kentico.Xperience.Admin.Base;
-using XperienceCommunity.Redirects;
 using XperienceCommunity.Redirects.UIPages;
 
 [assembly: UIPage(
