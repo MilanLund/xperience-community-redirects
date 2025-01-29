@@ -18,7 +18,7 @@ Navigating to the app presents a list of redirects.
   <img src="images/xperience-community-redirects-screenshot-listing.jpg" alt="Xperience by Kentico redirects module listing">
 </a>
 
-Clicking `New redirect` will enable you to create a new redirect, entering the `source URL` and then selecting relevant `target web page` that users should be redirected to. Note that when more than one web channel is present, the page selector enables users to switch to the relevant web channel content tree via the drop-down, highlighted below.
+Clicking `New redirect` will enable you to create a new redirect, entering the `source URL` and then selecting relevant `target web page` that users should be redirected to. Note that when more than one web channel is present, the page selector enables users to switch to the relevant web channel content tree via the drop-down.
 
 <a href="images/xperience-community-redirects-screenshot-create.jpg">
   <img src="images/xperience-community-redirects-screenshot-create.jpg" alt="Creating a redirect in the Xperience by Kentico redirects module">
@@ -27,8 +27,11 @@ Clicking `New redirect` will enable you to create a new redirect, entering the `
 ## Redirect functionality
 
 - The website checks each incoming request URL against a list of predefined redirects created via a custom module.
-- If a match is found, a 301 or 302 redirect is issued, and the user is automatically redirected to the target webpage.
-- Redirects are created on a per web channel basis, ensuring that you must select the relevant web channel when choosing the target page.
+- If a match is found, a redirect is issued, and the user is automatically redirected to the target URL.
+- The redirect response code can be specified as either `301` or `302`.
+- Redirects can be specified as either a `Internal web page` or a `URL`.
+- When `URL` is selected, the `Target URL` field will be displayed, allowing you to enter the URL to which requests for the source URL will be redirected. Could be relative or absolute. Examples: `https://www.example.com/page` or `/sitemap.xml`.
+- When `Internal web page` is selected, redirects are created on a per web channel basis, ensuring that you must select the relevant web channel when choosing the target page.
 - The functionality will attempt to redirect the user to the correct language variant of the target page by analyzing the source URL for the presence of a culture code (e.g. `en-GB`) or a language name (e.g. `en`) URL prefix.
 - Users will be redirected based on the target page's `canonical URL` setting, whether it is the `system URL` or the `vanity URL` defined for the page.
 - When creating a redirect, you can specify query string parameters to be added to the target URL. These parameters will be appended to the target URL when the redirect occurs.
