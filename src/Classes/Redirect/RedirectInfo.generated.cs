@@ -118,6 +118,16 @@ namespace XperienceCommunity.Redirects
             set => SetValue(nameof(RedirectTargetExternalAbsoluteUrl), value);
         }
 
+        /// <summary>
+        /// Redirect response code.
+        /// </summary>
+        [DatabaseField]
+        public virtual string RedirectResponseCode
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(RedirectResponseCode)), String.Empty);
+            set => SetValue(nameof(RedirectResponseCode), value);
+        }
+
 
         /// <summary>
         /// Deletes the object using appropriate provider.

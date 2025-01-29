@@ -50,8 +50,20 @@ internal class RedirectEditModel
     public string? TargetWebPageAnchor { get; set; }
 
     [VisibleIfEqualTo(nameof(RedirectTargetType), "external")]
-    [TextInputComponent(Label = "Target external absolute URL", Order = 6, ExplanationText = "The absolute URL to which requests for the source URL will be redirected to.", ExplanationTextAsHtml = true)]
+    [TextInputComponent(
+        Label = "Target external absolute URL", 
+        Order = 6, 
+        ExplanationText = "The absolute URL to which requests for the source URL will be redirected to.", 
+        ExplanationTextAsHtml = true)]
     public string? TargetExternalAbsoluteUrl { get; set; }
+
+    [DropDownComponent(
+        Label = "Response code",
+        Order = 7,
+        Options = ";301 – Permanent\n302;302 – Temporary",
+        ExplanationText = "Select the redirect code to be used for the redirect.",
+        ExplanationTextAsHtml = true)]
+    public string? ResponseCode { get; set; }
 
     public void MapToRedirectInfo(RedirectInfo info)
     {
@@ -61,5 +73,6 @@ internal class RedirectEditModel
         info.RedirectAnchor = TargetWebPageAnchor;
         info.RedirectTargetExternalAbsoluteUrl = TargetExternalAbsoluteUrl;
         info.RedirectTargetType = RedirectTargetType;
+        info.RedirectResponseCode = ResponseCode;
     }
 }

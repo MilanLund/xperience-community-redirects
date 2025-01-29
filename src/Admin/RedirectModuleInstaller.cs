@@ -156,6 +156,24 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
         };
         formItem.SetComponentName(TextInputComponent.IDENTIFIER);
         formInfo.AddFormItem(formItem);
+
+        formItem = new FormFieldInfo
+        {
+            Name = nameof(RedirectInfo.RedirectResponseCode),
+            Visible = true,
+            DataType = FieldDataType.Text,
+            Enabled = true,
+            AllowEmpty = true,
+            Settings = new()
+            {
+                { nameof(DropDownComponent.Properties.Label), "Redirect code" },
+                { nameof(DropDownComponent.Properties.Options), ";301 – Permanent\n302;302 – Temporary" },
+                { nameof(DropDownComponent.Properties.ExplanationText), "Select the redirect code to be used for the redirect." },
+                { nameof(DropDownComponent.Properties.ExplanationTextAsHtml), true }
+            }
+        };
+        formItem.SetComponentName(DropDownComponent.IDENTIFIER);
+        formInfo.AddFormItem(formItem);
         
         formItem = new FormFieldInfo
         {

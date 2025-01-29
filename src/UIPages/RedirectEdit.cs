@@ -59,6 +59,7 @@ internal class RedirectEdit : ModelEditPage<RedirectEditModel>
                 TargetWebPageAnchor = info.RedirectAnchor,
                 RedirectTargetType = info.RedirectTargetType,
                 TargetExternalAbsoluteUrl = info.RedirectTargetExternalAbsoluteUrl,
+                ResponseCode = info.RedirectResponseCode,
             };
 
             return _model;

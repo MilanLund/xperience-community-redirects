@@ -44,6 +44,7 @@ public class RedirectListing : ListingPage
         PageConfiguration.ColumnConfigurations
             .AddColumn(nameof(RedirectInfo.RedirectSourceUrl), "Source URL", searchable: true)
             .AddColumn(nameof(RedirectInfo.RedirectTargetWebPageItemGUID), "Target web page", formatter: GetWebPageUrl)
+            .AddColumn(nameof(RedirectInfo.RedirectResponseCode), "Redirect code", formatter: GetRedirectCode)
             .AddColumn(nameof(RedirectInfo.RedirectQueryString), "Target web page query string", visible: false)
             .AddColumn(nameof(RedirectInfo.RedirectAnchor), "Target web page anchor", visible: false)
             .AddColumn(nameof(RedirectInfo.RedirectTargetType), "Target type", visible: false)
@@ -52,6 +53,23 @@ public class RedirectListing : ListingPage
         PageConfiguration.AddEditRowAction<RedirectEditSection>();
         
         await base.ConfigurePage();
+    }
+
+    private string GetRedirectCode(object objectValue, IDataContainer dataContainer)
+    {
+        int redirectResponseCode = int.TryParse(ValidationHelper.GetString(objectValue, ""), out int parsedCode) ? parsedCode : 301;
+        
+        if (redirectResponseCode == 301)
+        {
+            return "301 – Permanent";
+        }
+
+        if (redirectResponseCode == 302)
+        {
+            return "302 – Temporary";
+        }
+
+        return parsedCode.ToString();
     }
 
     [PageCommand(Permission = SystemPermissions.DELETE)]

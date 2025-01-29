@@ -67,6 +67,8 @@ public class RedirectMiddleware
 
         if (matchingRedirectInfo != null)
         {
+            bool permanent = IsPermanentRedirect(matchingRedirectInfo.RedirectResponseCode);
+
             if (matchingRedirectInfo.RedirectTargetType == "external")
             {
                 var redirectTargetExternalAbsoluteUrl = matchingRedirectInfo.RedirectTargetExternalAbsoluteUrl?.Trim();
@@ -76,7 +78,7 @@ public class RedirectMiddleware
                     return;
                 }
 
-                context.Response.Redirect(redirectTargetExternalAbsoluteUrl, permanent: true);
+                context.Response.Redirect(redirectTargetExternalAbsoluteUrl, permanent: permanent);
                 await context.Response.CompleteAsync();
                 return;
             }
@@ -135,7 +137,7 @@ public class RedirectMiddleware
                             }
                         }
 
-                        context.Response.Redirect(targetPageUrl, permanent: true);
+                        context.Response.Redirect(targetPageUrl, permanent: permanent);
                 
                         await context.Response.CompleteAsync();
                         return;
@@ -247,6 +249,12 @@ public class RedirectMiddleware
         return System.Text.RegularExpressions.Regex.IsMatch(anchor, @"^[a-zA-Z0-9!$&'()*+,;=\-._~:@/?]+$") 
             ? HttpUtility.UrlEncode(anchor) 
             : string.Empty;
+    }
+
+    private bool IsPermanentRedirect(string? responseCode)
+    {
+        int redirectResponseCode = int.TryParse(responseCode, out int parsedCode) ? parsedCode : 301;
+        return redirectResponseCode == 301;
     }
 }
 
