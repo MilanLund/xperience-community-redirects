@@ -5,17 +5,15 @@ namespace XperienceCommunity.Redirects.Utilities;
 
 public static class UrlSanitizer
 {
-    private const int MaxUrlLength = 2048;
-    private const int MaxQueryKeyLength = 200;
-    private const string ValidQueryKeyPattern = @"^[a-zA-Z0-9!$'()*+,;:@_.\-]+$";
+    private const string ValidQueryKeyPattern = @"^[a-zA-Z0-9._~-]+$";
     private const string ValidAnchorPattern = @"^[a-zA-Z0-9!$&'()*+,;=\-._~:@/?]+$";
 
     public static string? SanitizeUrl(string? url)
     {
-        if (string.IsNullOrEmpty(url) || url.Length > MaxUrlLength)
+        if (string.IsNullOrEmpty(url) || url.Length > Constants.MaxUrlLength)
         {
             return null;
-        }
+        }   
 
         return IsAbsoluteUrl(url) 
             ? SanitizeAbsoluteUrl(url) 
@@ -134,7 +132,7 @@ public static class UrlSanitizer
 
     public static string SanitizeQueryParameters(string? queryString)
     {
-        if (string.IsNullOrEmpty(queryString) || queryString.Length > MaxUrlLength)
+        if (string.IsNullOrEmpty(queryString) || queryString.Length > Constants.MaxQueryStringLength)
         {
             return string.Empty;
         }
@@ -160,7 +158,7 @@ public static class UrlSanitizer
 
         return parts.Length == 1 
             ? key 
-            : $"{key}={EncodeQueryValue(parts[1].Trim())}";
+            : $"{key}={EncodeQueryValue(parts[1].Trim().Substring(0, Math.Min(parts[1].Length, Constants.MaxQueryValueLength)))}";
     }
 
     private static string EncodeQueryValue(string value) =>
@@ -168,12 +166,12 @@ public static class UrlSanitizer
 
     private static bool IsValidQueryStringKey(string key) =>
         !string.IsNullOrEmpty(key) &&
-        key.Length <= MaxQueryKeyLength &&
+        key.Length <= Constants.MaxQueryKeyLength &&
         System.Text.RegularExpressions.Regex.IsMatch(key, ValidQueryKeyPattern);
 
     public static string SanitizeAnchor(string? anchor)
     {
-        if (string.IsNullOrEmpty(anchor) || anchor.Length > MaxUrlLength)
+        if (string.IsNullOrEmpty(anchor) || anchor.Length > Constants.MaxAnchorLength)
         {
             return string.Empty;
         }

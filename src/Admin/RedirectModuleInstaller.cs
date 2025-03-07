@@ -60,6 +60,7 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
             DataType = FieldDataType.LongText,
             Enabled = true,
             AllowEmpty = false,
+            Size=Constants.MaxUrlLength,
             Settings = new()
             {
                 { nameof(TextInputProperties.Label), "Source URL" },
@@ -112,6 +113,7 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
             Name = nameof(RedirectInfo.RedirectQueryString),
             DataType = FieldDataType.Text,
             AllowEmpty = true,
+            Size=Constants.MaxQueryStringLength,
             Visible = true,
             Enabled = true,
             Settings = new()
@@ -129,6 +131,7 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
             Name = nameof(RedirectInfo.RedirectAnchor),
             DataType = FieldDataType.Text,
             AllowEmpty = true,
+            Size=Constants.MaxAnchorLength,
             Visible = true,
             Enabled = true,
             Settings = new()
@@ -146,6 +149,7 @@ internal class RedirectModuleInstaller(IInfoProvider<ResourceInfo> resourceInfoP
             Name = nameof(RedirectInfo.RedirectTargetUrl),
             DataType = FieldDataType.Text,
             AllowEmpty = true,
+            Size=Constants.MaxUrlLength,
             Visible = true,
             Enabled = true,
             Settings = new()
